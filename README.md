@@ -27,3 +27,5 @@ StackedCardsCarouselWidget(
     items: items, /// Pass any list of widgets here.
 )
 ```
+
+![](https://github.com/shreejeetp/stacked-cards-carousel-flutter/blob/main/demo.gif)
