@@ -28,4 +28,4 @@ StackedCardsCarouselWidget(
 )
 ```
 
-![](https://github.com/shreejeetp/stacked-cards-carousel-flutter/blob/main/demo.gif)
+![](https://github.com/shreejeetp/stacked-cards-carousel-flutter/blob/main/demo.gif?raw=true)
