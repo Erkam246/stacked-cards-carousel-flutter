@@ -1,5 +1,7 @@
 # Flutter Stacked Cards Carousel
 
+![](https://github.com/shreejeetp/stacked-cards-carousel-flutter/blob/main/demo.gif?raw=true)
+
 A Flutter package that displays any widget in a stacked cards carousel format.
 
 This package is useful for creating visually appealing and interactive carousels for showcasing products, images, or any other type of content.
@@ -27,5 +29,3 @@ StackedCardsCarouselWidget(
     items: items, /// Pass any list of widgets here.
 )
 ```
-
-![](https://github.com/shreejeetp/stacked-cards-carousel-flutter/blob/main/demo.gif?raw=true)
