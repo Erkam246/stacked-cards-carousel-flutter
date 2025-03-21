@@ -32,7 +32,7 @@ class StackedCardsController {
 class StackedCardsCarouselWidget extends StatelessWidget {
   ///Items to be displayed in the card stack.
   ///The items would be constrained with the [height] and [width] provided.
-  ///There should be atleast 3 items in the list.
+  ///At least one item must be provided.
   final List<Widget> items;
 
   ///Height of a card in stack. Defaults to 300.
@@ -62,8 +62,7 @@ class StackedCardsCarouselWidget extends StatelessWidget {
     this.stackLevels = 3,
     this.onItemChanged,
     this.controller,
-  }) : assert(items.length >= 3,
-            'StackedCardsCarouselWidget: There should be atleast 3 items in the list');
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -84,7 +83,7 @@ class StackedCardsCarouselWidget extends StatelessWidget {
 class _StackedCards extends StatefulWidget {
   ///Items to be displayed in the card stack.
   ///The items would be constrained with the [height] and [width] provided.
-  ///There should be atleast 3 items in the list.
+  ///At least one item must be provided.
   final List<Widget> items;
 
   ///Height of a card in stack. Defaults to 300.
@@ -126,6 +125,10 @@ class __StackedCardsState extends State<_StackedCards> {
     if (list.isEmpty) {
       throw Exception('List is empty');
     }
+    // If there's only one item, return that item regardless of steps
+    if (list.length == 1) {
+      return list[0];
+    }
     int nextIndex = (currentIndex + steps) % list.length;
     return list[nextIndex];
   }
@@ -133,6 +136,10 @@ class __StackedCardsState extends State<_StackedCards> {
   T getPreviousItem<T>(List<T> list, int currentIndex, int steps) {
     if (list.isEmpty) {
       throw Exception('List is empty');
+    }
+    // If there's only one item, return that item regardless of steps
+    if (list.length == 1) {
+      return list[0];
     }
     int previousIndex = (currentIndex - steps) % list.length;
     if (previousIndex < 0) {
@@ -178,13 +185,17 @@ class __StackedCardsState extends State<_StackedCards> {
   void initWidgets() {
     _widgetWithLevels.clear();
     _widgetWithLevels.add([widget.items[selectedIndex]]);
-    for (int i = 1; i <= numberOfLevels; i++) {
-      List<Widget> levelItems = [];
-      Widget nextItem = getNextItem(widget.items, selectedIndex, i);
-      Widget previousItem = getPreviousItem(widget.items, selectedIndex, i);
-      levelItems.add(previousItem);
-      levelItems.add(nextItem);
-      _widgetWithLevels.add(levelItems);
+
+    // Only add levels with next/previous items if we have more than one item
+    if (widget.items.length > 1) {
+      for (int i = 1; i <= numberOfLevels; i++) {
+        List<Widget> levelItems = [];
+        Widget nextItem = getNextItem(widget.items, selectedIndex, i);
+        Widget previousItem = getPreviousItem(widget.items, selectedIndex, i);
+        levelItems.add(previousItem);
+        levelItems.add(nextItem);
+        _widgetWithLevels.add(levelItems);
+      }
     }
   }
 
@@ -192,6 +203,19 @@ class __StackedCardsState extends State<_StackedCards> {
   Widget build(BuildContext context) {
     double spaceIntervals =
         (widget.containerWidth - widget.width) / (2 * (widget.stackLevels - 1));
+
+    // If there's only one item, just render it without any drag functionality
+    if (widget.items.length == 1) {
+      return Center(
+        child: Container(
+          height: widget.height,
+          width: widget.width,
+          color: Colors.transparent,
+          child: widget.items.first,
+        ),
+      );
+    }
+
     return Stack(
       children: [
         Positioned(
@@ -202,43 +226,47 @@ class __StackedCardsState extends State<_StackedCards> {
             opacity: _isAnimating ? 0 : 1,
             child: Stack(
               children: [
-                for (int i = _widgetWithLevels.length - 2; i > 0; i--) ...[
-                  Positioned(
-                    left: (widget.containerWidth - widget.width) / 2 +
-                        ((i) * spaceIntervals),
-                    child: Transform.scale(
-                      scale: 1 - (i * 0.1),
-                      child: Container(
-                        height: widget.height,
-                        width: widget.width,
-                        color: Colors.transparent,
-                        child: _widgetWithLevels[i][1],
+                // Only render stack levels if we have more than one item
+                if (widget.items.length > 1) ...[
+                  for (int i = _widgetWithLevels.length - 2; i > 0; i--) ...[
+                    Positioned(
+                      left: (widget.containerWidth - widget.width) / 2 +
+                          ((i) * spaceIntervals),
+                      child: Transform.scale(
+                        scale: 1 - (i * 0.1),
+                        child: Container(
+                          height: widget.height,
+                          width: widget.width,
+                          color: Colors.transparent,
+                          child: _widgetWithLevels[i][1],
+                        ),
                       ),
                     ),
-                  ),
-                  Positioned(
-                    right: (widget.containerWidth - widget.width) / 2 +
-                        ((i) * spaceIntervals),
-                    child: Transform.scale(
-                      scale: 1 - (i * 0.1),
-                      child: Container(
-                        height: widget.height,
-                        width: widget.width,
-                        color: Colors.transparent,
-                        child: _widgetWithLevels[i][0],
+                    Positioned(
+                      right: (widget.containerWidth - widget.width) / 2 +
+                          ((i) * spaceIntervals),
+                      child: Transform.scale(
+                        scale: 1 - (i * 0.1),
+                        child: Container(
+                          height: widget.height,
+                          width: widget.width,
+                          color: Colors.transparent,
+                          child: _widgetWithLevels[i][0],
+                        ),
                       ),
-                    ),
-                  )
+                    )
+                  ],
                 ],
                 Positioned(
                   right: (widget.containerWidth - widget.width) / 2,
                   child: Transform.scale(
                     scale: 1,
                     child: GestureDetector(
-                      onHorizontalDragStart: onHorizontalDragStart,
-                      onHorizontalDragEnd: (d) => onHorizontalDragEnd(),
-                      onHorizontalDragUpdate: onHorizontalDragUpdate,
-                      onHorizontalDragCancel: () => onHorizontalDragEnd(),
+                      // Only enable drag gestures if we have more than one item
+                      onHorizontalDragStart: widget.items.length > 1 ? onHorizontalDragStart : null,
+                      onHorizontalDragEnd: widget.items.length > 1 ? (d) => onHorizontalDragEnd() : null,
+                      onHorizontalDragUpdate: widget.items.length > 1 ? onHorizontalDragUpdate : null,
+                      onHorizontalDragCancel: widget.items.length > 1 ? () => onHorizontalDragEnd() : null,
                       child: Container(
                         height: widget.height,
                         width: widget.width,
@@ -252,7 +280,7 @@ class __StackedCardsState extends State<_StackedCards> {
             ),
           ),
         ),
-        if (_isAnimating)
+        if (_isAnimating && widget.items.length > 1)
           Builder(builder: (context) {
             double progress = _dx.abs() / _panThreshold;
             bool isForward = _dx > 0;
@@ -322,6 +350,9 @@ class __StackedCardsState extends State<_StackedCards> {
   }
 
   void onHorizontalDragUpdate(DragUpdateDetails d) {
+    // Only enable drag if we have more than one item
+    if (widget.items.length <= 1) return;
+
     _dx += d.primaryDelta!;
     if (_dx.abs() > _panThreshold) {
       _dx = _panThreshold * _dx.sign;
@@ -330,6 +361,9 @@ class __StackedCardsState extends State<_StackedCards> {
   }
 
   void onHorizontalDragEnd() {
+    // Only enable drag if we have more than one item
+    if (widget.items.length <= 1) return;
+
     _isAnimating = false;
     if (_dx.abs() > (_panThreshold / 2)) {
       if (_dx > 0) {
@@ -350,16 +384,22 @@ class __StackedCardsState extends State<_StackedCards> {
   }
 
   void onHorizontalDragStart(DragStartDetails d) {
+    // Only enable drag if we have more than one item
+    if (widget.items.length <= 1) return;
+
     _isAnimating = true;
   }
 
   List<Widget> getAnimatingCardStack(
-    double maxWidth,
-    int i,
-    double spaceIntervals,
-    bool isForward,
-    double progress,
-  ) {
+      double maxWidth,
+      int i,
+      double spaceIntervals,
+      bool isForward,
+      double progress,
+      ) {
+    // Return empty list if there's only one item
+    if (widget.items.length <= 1) return [];
+
     double scale = 1 - (i * 0.1);
     double targetScaleForward = 1 - (i * 0.1) + (isForward ? -0.1 : 0.1);
     double cuvedProgress = Curves.linear.transform(progress);
@@ -381,11 +421,11 @@ class __StackedCardsState extends State<_StackedCards> {
 
     double currentOpacity = i >= numberOfLevels ? 0 : 1;
     double targetOpacityForward =
-        i + (isForward ? 1 : -1) >= numberOfLevels ? 0 : 1;
+    i + (isForward ? 1 : -1) >= numberOfLevels ? 0 : 1;
     double opacityForward =
         currentOpacity + (targetOpacityForward - currentOpacity) * progress;
     double targetOpacityReverse =
-        i + (isForward ? -1 : 1) >= numberOfLevels ? 0 : 1;
+    i + (isForward ? -1 : 1) >= numberOfLevels ? 0 : 1;
     double opacityReverse =
         currentOpacity + (targetOpacityReverse - currentOpacity) * progress;
     Widget forwardWidget = Positioned(
