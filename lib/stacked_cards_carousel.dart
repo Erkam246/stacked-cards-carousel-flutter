@@ -1,4 +1,4 @@
-library stacked_cards_carousel;
+library;
 
 import 'package:flutter/material.dart';
 
@@ -13,10 +13,6 @@ class StackedCardsController {
   __StackedCardsState? _state;
 
   void _attach(__StackedCardsState state) {
-    if (_state != null) {
-      throw Exception(
-          'StackedCardsController: Controller is already attached to a widget');
-    }
     _state = state;
   }
 
@@ -26,6 +22,15 @@ class StackedCardsController {
 
   void dispose() {
     _detach();
+  }
+
+  /// Sets the index programmatically and updates the widget.
+  void setIndex(int newIndex) {
+    if (_state != null) {
+      _state!._setIndex(newIndex);
+    } else {
+      _index = newIndex;
+    }
   }
 }
 
@@ -388,6 +393,13 @@ class __StackedCardsState extends State<_StackedCards> {
     if (widget.items.length <= 1) return;
 
     _isAnimating = true;
+  }
+
+  /// Sets the index programmatically and updates the widget.
+  void _setIndex(int newIndex) {
+    selectedIndex = newIndex;
+    initWidgets();
+    setState(() {});
   }
 
   List<Widget> getAnimatingCardStack(
